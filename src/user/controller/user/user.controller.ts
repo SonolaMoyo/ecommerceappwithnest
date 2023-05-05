@@ -42,6 +42,7 @@ export class UserController {
             if (!user) {
                 throw new HttpException('Invalid creditials', HttpStatus.BAD_REQUEST);
             }
+            console.log("hello here")
 
             if (signinDto.password != user.password) {
                 throw new HttpException('Invalid creditials', HttpStatus.BAD_REQUEST);
