@@ -1,22 +1,24 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
 export class userAuthMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
-    let token;
+    let token = "";
     try {
-        const cookies = req.headers.cookie?.split(';').map(c => c.trim()) || [];
-        console.log(cookies)
-        const token = cookies.find(c => c.startsWith('ecommercetoken='));
-        console.log(token)
+      const cookies = req.headers.cookie?.split(';').map(c => c.trim()) || [];
+    token = cookies.find(c => c.startsWith('ecommercetoken='));
+    const value = token.split('=')[1];
+    const decoded = decodeURIComponent(value);
+    const parsed = JSON.parse(decoded.substring(2));
+    const id = parsed.id;
+    req['userId'] = id;
     } catch (error) {
-        console.log(error)
+      throw new HttpException(`Not authorised to access this route, Login`, HttpStatus.BAD_REQUEST)
     }
-    console.log("insided the user auth middleware");
     if (!token) {
-      return res.status(403).send({message: "error", error: "Not authorised to access this route, Login"})
+      return res.status(403).send({ message: "error", error: "Not authorised to access this route, Login" })
     }
     next();
   }
