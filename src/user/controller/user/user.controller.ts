@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { UserDto } from 'src/user/dto/user.dto';
 import { UserService } from 'src/user/service/user/user.service';
@@ -22,11 +22,35 @@ export class UserController {
         }
     }
 
+    @Get('checkout')
+    async checkout(@Req() req: Request) {
+        try {
+            const userId = req['userId'];
+            const user = await this.userService.getUserEmailAndPhoneNumber(userId);
+            //console.log(`User email: ${user.email}`);
+            //console.log(`User phone number: ${user.phoneNumber}`);
+
+            const productIds = await this.userService.getProductIdsInCart(userId);
+            const products = await this.userService.getProductsByIds(productIds);
+            //console.log(products);
+
+            const totalAmount = await this.userService.sumPrices(productIds);
+            //console.log(`Total amount: ${totalAmount}`);
+
+            await this.userService.updateCheckout(userId, products, totalAmount);
+
+            return ({message: "checkout successfully", products, totalAmount})
+
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @Get('/:id')
     async getUser(@Param('id') id: string) {
         try {
             const user = await this.userService.getUser(id);
-            if(!user){
+            if (!user) {
                 throw new HttpException(`user doesn't exist`, HttpStatus.BAD_REQUEST);
             }
             return ({ message: 'Here is user', user })
@@ -42,7 +66,6 @@ export class UserController {
             if (!user) {
                 throw new HttpException('Invalid creditials', HttpStatus.BAD_REQUEST);
             }
-            console.log("hello here")
 
             if (signinDto.password != user.password) {
                 throw new HttpException('Invalid creditials', HttpStatus.BAD_REQUEST);
@@ -50,17 +73,18 @@ export class UserController {
 
             res.cookie('ecommercetoken', { id: user.id }, { httpOnly: true, sameSite: 'strict', maxAge: 1000 * 60 * 60 * 24 });
 
-            return res.status(200).json({message: "user signed in", user});
+            return res.status(200).json({ message: "user signed in", user });
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
     }
 
     @Post('logout')
-    async userLogout(@Res() res: Response){
+    async userLogout(@Res() res: Response) {
         try {
             res.clearCookie('ecommercetoken');
-            return res.status(200).json({message: 'user logged out'})
+            //console.log(req['userId'])
+            return res.status(200).json({ message: 'user logged out' })
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
@@ -103,4 +127,27 @@ export class UserController {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @Post('cart/:productId')
+    async addToCart(@Param('productId') productId: string, @Req() req: Request) {
+        try {
+            const userId = req['userId'];
+            const user = await this.userService.addToCart(userId, productId);
+            return ({ message: "product added to cart", user })
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Delete('cart/:productId')
+    async removeFromCart(@Param('productId') productId: string, @Req() req: Request) {
+        try {
+            const userId = req['userId'];
+            const user = await this.userService.removeFromCart(userId, productId);
+            return ({ message: "product removed from cart", user })
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }
