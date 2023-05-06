@@ -16,6 +16,10 @@ import { userAuthMiddleware } from './user/middleware/user.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-      consumer.apply(userAuthMiddleware).forRoutes({path: 'user/logout', method: RequestMethod.POST})
+    consumer.apply(userAuthMiddleware).forRoutes(
+      { path: 'user/logout', method: RequestMethod.POST },
+      { path: 'user/cart/:productId', method: RequestMethod.POST },
+      {path: 'user/cart/:productId', method: RequestMethod.DELETE},
+      {path: 'user/checkout', method: RequestMethod.GET})
   }
 }
