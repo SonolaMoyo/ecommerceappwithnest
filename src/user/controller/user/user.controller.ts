@@ -22,25 +22,12 @@ export class UserController {
         }
     }
 
-    @Get('checkout')
-    async checkout(@Req() req: Request) {
+    @Get('logout')
+    async userLogout(@Res() res: Response) {
         try {
-            const userId = req['userId'];
-            const user = await this.userService.getUserEmailAndPhoneNumber(userId);
-            //console.log(`User email: ${user.email}`);
-            //console.log(`User phone number: ${user.phoneNumber}`);
-
-            const productIds = await this.userService.getProductIdsInCart(userId);
-            const products = await this.userService.getProductsByIds(productIds);
-            //console.log(products);
-
-            const totalAmount = await this.userService.sumPrices(productIds);
-            //console.log(`Total amount: ${totalAmount}`);
-
-            await this.userService.updateCheckout(userId, products, totalAmount);
-
-            return ({message: "checkout successfully", products, totalAmount})
-
+            res.clearCookie('ecommercetoken');
+            //console.log(req['userId'])
+            return res.status(200).json({ message: 'user logged out' })
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
@@ -71,20 +58,9 @@ export class UserController {
                 throw new HttpException('Invalid creditials', HttpStatus.BAD_REQUEST);
             }
 
-            res.cookie('ecommercetoken', { id: user.id }, { httpOnly: true, sameSite: 'strict', maxAge: 1000 * 60 * 60 * 24 });
+            res.cookie('ecommercetoken', { id: user.id }, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 });
 
             return res.status(200).json({ message: "user signed in", user });
-        } catch (error) {
-            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @Post('logout')
-    async userLogout(@Res() res: Response) {
-        try {
-            res.clearCookie('ecommercetoken');
-            //console.log(req['userId'])
-            return res.status(200).json({ message: 'user logged out' })
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
@@ -100,6 +76,39 @@ export class UserController {
             } else {
                 throw new HttpException("Unable to create User", HttpStatus.BAD_REQUEST);
             }
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Post('checkout')
+    async checkout(@Req() req: Request, @Body() userNo: string) {
+        try {
+            //const userId = req['userId'];
+            const userId = userNo;
+            const user = await this.userService.getUserEmailAndPhoneNumber(userId);
+            //console.log(`User email: ${user.email}`);
+            //console.log(`User phone number: ${user.phoneNumber}`);
+
+            const productIds = await this.userService.getProductIdsInCart(userId);
+            const products = await this.userService.getProductsByIds(productIds);
+            //console.log(products);
+
+            const totalAmount = await this.userService.sumPrices(productIds);
+            //console.log(`Total amount: ${totalAmount}`);
+
+            // send email using Twilio SendGrid
+            // const emailContent = `Thank you for your purchase at Chronos!\n\nTotal amount: ${totalAmount}\n\nProducts: ${JSON.stringify(products)}`;
+            // await this.userService.sendEmail(user.email, 'Your Purchase Receipt', emailContent);
+
+            // send SMS using Twilio SMS API
+            const smsContent = `Thank you for your purchase at Chronos! Total amount: ${totalAmount}`;
+            await this.userService.sendSms(user.phoneNumber, smsContent);
+
+            await this.userService.updateCheckout(userId, products, totalAmount);
+
+            return ({ message: "checkout successfully", products, totalAmount })
+
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
@@ -129,9 +138,10 @@ export class UserController {
     }
 
     @Post('cart/:productId')
-    async addToCart(@Param('productId') productId: string, @Req() req: Request) {
+    async addToCart(@Param('productId') productId: string, @Req() req: Request, @Body() userNo: string) {
         try {
-            const userId = req['userId'];
+            //const userId = req['userId'];
+            const userId = userNo;
             const user = await this.userService.addToCart(userId, productId);
             return ({ message: "product added to cart", user })
         } catch (error) {
@@ -140,9 +150,10 @@ export class UserController {
     }
 
     @Delete('cart/:productId')
-    async removeFromCart(@Param('productId') productId: string, @Req() req: Request) {
+    async removeFromCart(@Param('productId') productId: string, @Req() req: Request, @Body() userNo: string) {
         try {
-            const userId = req['userId'];
+            //const userId = req['userId'];
+            const userId = userNo;
             const user = await this.userService.removeFromCart(userId, productId);
             return ({ message: "product removed from cart", user })
         } catch (error) {

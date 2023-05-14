@@ -5,10 +5,18 @@ import { Model } from 'mongoose';
 import { Product } from 'src/product/schema/product.schema';
 import { UserDto } from 'src/user/dto/user.dto';
 import { User } from 'src/user/schema/user.schema';
+import { Twilio } from 'twilio';
+//import * as sgMail from '@sendgrid/mail'
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(Product.name) private productModel: Model<Product>) { }
+    private readonly twilioClient: Twilio;
+    private readonly sendGridApiKey: string;
+    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(Product.name) private productModel: Model<Product>) {
+        this.twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        //this.sendGridApiKey = process.env.SENDGRID_API_KEY;
+        //sgMail.setApiKey(this.sendGridApiKey);
+    }
 
     async createUser(userDto: UserDto): Promise<User> {
         const createUser = new this.userModel(userDto);
@@ -103,5 +111,20 @@ export class UserService {
             },
         ).exec();
     }
+
+    async sendSms(toNo: number, content: string) {
+        const to = toNo.toString();
+        await this.twilioClient.messages.create({ body: content, to, from: process.env.TWILIO_PHONE_NUMBER }).then((resp) => console.log(resp))
+    }
+
+    // async sendEmail(to: string, subject: string, content: string) {
+    //     const message = {
+    //         to,
+    //         from: process.env.SENDGRID_SENDER_EMAIL,
+    //         subject,
+    //         text: content,
+    //     };
+    //     await sgMail.send(message);
+    // }
 }
 

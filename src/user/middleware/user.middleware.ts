@@ -7,7 +7,10 @@ export class userAuthMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     let token = "";
     try {
+      console.log(req.cookies)
+      console.log('here')
       const cookies = req.headers.cookie?.split(';').map(c => c.trim()) || [];
+      console.log(cookies)
     token = cookies.find(c => c.startsWith('ecommercetoken='));
     const value = token.split('=')[1];
     const decoded = decodeURIComponent(value);
