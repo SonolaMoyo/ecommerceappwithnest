@@ -81,11 +81,10 @@ export class UserController {
         }
     }
 
-    @Post('checkout')
-    async checkout(@Req() req: Request, @Body() userNo: string) {
+    @Post('checkout/:userId')
+    async checkout(@Req() req: Request, @Param('userId') userId) {
         try {
             //const userId = req['userId'];
-            const userId = userNo;
             const user = await this.userService.getUserEmailAndPhoneNumber(userId);
             //console.log(`User email: ${user.email}`);
             //console.log(`User phone number: ${user.phoneNumber}`);
@@ -137,11 +136,10 @@ export class UserController {
         }
     }
 
-    @Post('cart/:productId')
-    async addToCart(@Param('productId') productId: string, @Req() req: Request, @Body() userNo: string) {
+    @Post('cart/:userId/:productId')
+    async addToCart(@Param('productId') productId: string, @Param('userId') userId, @Req() req: Request) {
         try {
             //const userId = req['userId'];
-            const userId = userNo;
             const user = await this.userService.addToCart(userId, productId);
             return ({ message: "product added to cart", user })
         } catch (error) {
@@ -149,11 +147,10 @@ export class UserController {
         }
     }
 
-    @Delete('cart/:productId')
-    async removeFromCart(@Param('productId') productId: string, @Req() req: Request, @Body() userNo: string) {
+    @Delete('cart/:userId/:productId')
+    async removeFromCart(@Param('productId') productId: string, @Param('userId') userId, @Req() req: Request) {
         try {
             //const userId = req['userId'];
-            const userId = userNo;
             const user = await this.userService.removeFromCart(userId, productId);
             return ({ message: "product removed from cart", user })
         } catch (error) {
