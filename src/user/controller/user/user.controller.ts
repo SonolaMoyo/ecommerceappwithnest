@@ -101,8 +101,8 @@ export class UserController {
             // await this.userService.sendEmail(user.email, 'Your Purchase Receipt', emailContent);
 
             // send SMS using Twilio SMS API
-            const smsContent = `Thank you for your purchase at Chronos! Total amount: ${totalAmount}`;
-            await this.userService.sendSms(user.phoneNumber, smsContent);
+            //const smsContent = `Thank you for your purchase at Chronos! Total amount: ${totalAmount}`;
+            //await this.userService.sendSms(user.phoneNumber, smsContent);
 
             await this.userService.updateCheckout(userId, products, totalAmount);
 
