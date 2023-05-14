@@ -18,6 +18,15 @@ export class ProductService {
         return await this.productModel.find().exec();
     }
 
+    async getProductById(id: string) {
+      return await this.productModel.findById(id);
+    }
+
+    async getProductsByCategory(category: string) {
+      const products = await this.productModel.find({ category });
+      return products;
+    }
+
     async updateProduct(id: string, updateProductDto: CreateProductDto): Promise<Product> | null {
         const product = await this.productModel.findById(id);
         if(!product){
@@ -56,6 +65,7 @@ export class ProductService {
               $project: {
                 _id: 0,
                 category: "$_id",
+                categoryDesc: "$products.categoryDesc",
                 categoryImageLink: { $first: "$products.categoryImageLink" },
               },
             },

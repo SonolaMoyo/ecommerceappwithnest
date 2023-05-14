@@ -10,6 +10,18 @@ export class Product {
     productName: string;
 
     @Prop({type: String})
+    imgLink: string;
+
+    @Prop({type: String})
+    quantity: string;
+
+    @Prop({type: String})
+    delivery: string;
+
+    @Prop({type: String})
+    fastestDelivery: string;
+
+    @Prop({type: String})
     websiteLink: string;
 
     @Prop({ type: Number })
@@ -20,6 +32,9 @@ export class Product {
 
     @Prop({ type: String, required: true })
     category: string;
+
+    @Prop()
+    categoryDesc: string;
 
     @Prop()
     categoryImageLink: string;
