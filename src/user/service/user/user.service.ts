@@ -6,17 +6,17 @@ import { Product } from 'src/product/schema/product.schema';
 import { UserDto } from 'src/user/dto/user.dto';
 import { User } from 'src/user/schema/user.schema';
 import { Twilio } from 'twilio';
-//import * as sgMail from '@sendgrid/mail'
+import * as emailjs from "emailjs-com";
 
 @Injectable()
 export class UserService {
     private readonly twilioClient: Twilio;
     private readonly sendGridApiKey: string;
-    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(Product.name) private productModel: Model<Product>) {
-        this.twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-        //this.sendGridApiKey = process.env.SENDGRID_API_KEY;
-        //sgMail.setApiKey(this.sendGridApiKey);
-    }
+    private emailUserID = process.env.EMAILJS_USER_ID;
+    private emailServiceID = process.env.EMAILJS_SERVICE_ID;
+    private emailTemplateID = process.env.EMAILJS_TEMPLATE_ID;
+
+    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(Product.name) private productModel: Model<Product>) {}
 
     async createUser(userDto: UserDto): Promise<User> {
         const createUser = new this.userModel(userDto);
@@ -83,7 +83,7 @@ export class UserService {
 
     async getUserEmailAndPhoneNumber(userId: string) {
         const user = await this.userModel.findById(userId).exec();
-        return { email: user.email, phoneNumber: user.phoneNumber };
+        return { email: user.email, phoneNumber: user.phoneNumber, name: user.name };
     }
 
     async getProductIdsInCart(userId: string) {
@@ -117,14 +117,12 @@ export class UserService {
         await this.twilioClient.messages.create({ body: content, to, from: process.env.TWILIO_PHONE_NUMBER }).then((resp) => console.log(resp))
     }
 
-    // async sendEmail(to: string, subject: string, content: string) {
-    //     const message = {
-    //         to,
-    //         from: process.env.SENDGRID_SENDER_EMAIL,
-    //         subject,
-    //         text: content,
-    //     };
-    //     await sgMail.send(message);
-    // }
+    async sendEmail(to_name: string, message: string, user_email: string) {
+        try {
+            await emailjs.send(this.emailServiceID, this.emailTemplateID, { to_name, message, user_email }, this.emailUserID)
+        } catch (error) {
+            return error
+        }
+    }
 }
 

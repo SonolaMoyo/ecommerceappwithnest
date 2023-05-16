@@ -96,13 +96,10 @@ export class UserController {
             const totalAmount = await this.userService.sumPrices(productIds);
             //console.log(`Total amount: ${totalAmount}`);
 
-            // send email using Twilio SendGrid
-            // const emailContent = `Thank you for your purchase at Chronos!\n\nTotal amount: ${totalAmount}\n\nProducts: ${JSON.stringify(products)}`;
-            // await this.userService.sendEmail(user.email, 'Your Purchase Receipt', emailContent);
-
-            // send SMS using Twilio SMS API
-            //const smsContent = `Thank you for your purchase at Chronos! Total amount: ${totalAmount}`;
-            //await this.userService.sendSms(user.phoneNumber, smsContent);
+            // send email using Emailjs
+            const emailContent = `Thank you for your purchase at Chronos!\n\nTotal amount: ${totalAmount}\n\nProducts: ${JSON.stringify(products)}`;
+            
+            await this.userService.sendEmail(user.name, emailContent, user.email)
 
             await this.userService.updateCheckout(userId, products, totalAmount);
 
@@ -137,7 +134,7 @@ export class UserController {
     }
 
     @Post('cart/:userId/:productId')
-    async addToCart(@Param('productId') productId: string, @Param('userId') userId, @Req() req: Request) {
+    async addToCart(@Param('productId') productId: string, @Param('userId') userId) {
         try {
             //const userId = req['userId'];
             const user = await this.userService.addToCart(userId, productId);
@@ -148,7 +145,7 @@ export class UserController {
     }
 
     @Delete('cart/:userId/:productId')
-    async removeFromCart(@Param('productId') productId: string, @Param('userId') userId, @Req() req: Request) {
+    async removeFromCart(@Param('productId') productId: string, @Param('userId') userId) {
         try {
             //const userId = req['userId'];
             const user = await this.userService.removeFromCart(userId, productId);
